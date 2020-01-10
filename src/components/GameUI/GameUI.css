@@ -1,0 +1,106 @@
+.ui {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.nav {
+  height: 50%;
+  width: 10%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.nav__buttons {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+}
+
+.tab-image {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5%;
+}
+
+.ui__tab {
+  height: 50%;
+  width: 50%;
+}
+
+.game-view {
+  width: 100%;
+  height: 100%;
+}
+
+.game-board {
+  width: 100%;
+  height: 85%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.game-board__card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+}
+
+.pause-text {
+  color: red;
+  font-size: 200%;
+  font-weight: bold;
+  position: absolute;
+  display: block;
+  align-self: center;
+  justify-self: center;
+}
+
+.game-controls {
+  width: 100%;
+  height: 15%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.game-controls__card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.control-buttons {
+  width: 50%;
+  display: flex;
+  flex-direction: row;
+}
+
+.game-controls__btn {
+  background-color: greenyellow;
+  color: black;
+  height: 60%;
+  width: 25%;
+  margin: auto;
+}
+
+.game-scores {
+  width: 50%;
+  display: flex;
+  flex-direction: row;
+}
+
+.game-scores__label {
+  margin: auto;
+}
+
+.game-settings {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
