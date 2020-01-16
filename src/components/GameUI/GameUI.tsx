@@ -4,6 +4,8 @@ import GameLogic from "../GameLogic/GameLogic";
 import ParameterInput from "./ParameterInput";
 import Card from "../Card/Card";
 import GameOverModal from "./GameOverModal/GameOverModal";
+import Algorithm from "../MachineLearning/Algorithm";
+import TabButton from "./TabButton/TabButton";
 
 export interface GameUIProps {}
 
@@ -42,7 +44,7 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
     });
   };
 
-  startNewGame = () => {
+  startNewGame = (startPaused: boolean) => {
     if (this.state.score > this.state.highScore) {
       this.setState({ highScore: this.state.score });
     }
@@ -50,14 +52,22 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
       score: 0,
       gameOver: false,
       startGame: true,
-      paused: true
+      paused: startPaused
     });
   };
 
-  gameOver = () => {
+  gameOver = (willAutoClose: boolean) => {
     this.setState({
       gameOver: true
     });
+    if (willAutoClose) {
+      setTimeout(() => {
+        this.setState({
+          gameOver: false
+        });
+        this.startNewGame(false);
+      }, 1000);
+    }
   };
 
   gridWidthChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +112,7 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
   renderTab = (): JSX.Element => {
     switch (this.state.selectedTab) {
       case 0:
+      case 2:
         return this.renderGame();
       case 1:
         return this.renderSettings();
@@ -144,22 +155,47 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
               <GameOverModal
                 score={this.state.score}
                 highScore={this.state.highScore}
-                closeHandler={() => this.startNewGame()}
+                closeHandler={() => this.startNewGame(true)}
               />
             ) : null}
-            <GameLogic
-              boardWidth={this.state.boardWidth}
-              boardHeight={this.state.boardHeight}
-              paused={this.state.paused}
-              updateScore={this.updateScore}
-              gameOver={this.gameOver}
-              start={this.state.startGame}
-              gameStarted={() => this.setState({ startGame: false })}
-            />
+            {this.renderGameLogic()}
           </Card>
         </div>
       </div>
     );
+  };
+
+  renderGameLogic = (): JSX.Element => {
+    // console.log("Selected tab: " + this.state.selectedTab);
+    if (this.state.selectedTab === 0) {
+      return (
+        <GameLogic
+          boardWidth={this.state.boardWidth}
+          boardHeight={this.state.boardHeight}
+          paused={this.state.paused}
+          updateScore={this.updateScore}
+          gameOver={this.gameOver}
+          start={this.state.startGame}
+          humanControlled={true}
+          gameStarted={() => this.setState({ startGame: false })}
+        />
+      );
+    } else if (this.state.selectedTab === 2) {
+      return (
+        <Algorithm
+          boardHeight={this.state.boardHeight}
+          boardWidth={this.state.boardWidth}
+          gameOver={this.gameOver}
+          updateScore={this.updateScore}
+          paused={this.state.paused}
+          score={this.state.score}
+          startGame={this.state.startGame}
+          gameStarted={() => this.setState({ startGame: false })}
+        />
+      );
+    } else {
+      return <div></div>;
+    }
   };
 
   renderSettings = (): JSX.Element => {
@@ -193,21 +229,25 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
         <div className="nav">
           <Card>
             <div className="nav__buttons">
-              <img
-                className="tab-image"
+              <TabButton
+                id={0}
+                selectedId={this.state.selectedTab}
                 onClick={() => this.setState({ selectedTab: 0 })}
                 src="home_icon-icons.com_73532.png"
-                alt=""
-                width="50"
-                height="50"
               />
-              <img
-                className="tab-image"
+              {/* <TabButton
+                id={1}
+                selectedId={this.state.selectedTab}
                 onClick={() => this.setState({ selectedTab: 1 })}
                 src="cog-4-512.png"
-                alt=""
-                width="50"
-                height="50"
+              /> */}
+              <TabButton
+                id={2}
+                selectedId={this.state.selectedTab}
+                onClick={() =>
+                  this.setState({ selectedTab: 2, paused: false, startGame: true })
+                }
+                src="Robot-icon-by-ahlangraphic-580x386.jpg"
               />
             </div>
           </Card>

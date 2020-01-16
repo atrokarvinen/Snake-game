@@ -37,7 +37,6 @@ const Grid: React.FunctionComponent<GridProps> = props => {
 
   // Mark coordinates occupied by eaten food i.e. food inside snake
   props.snake.eatPoints.forEach((coord: Point) => {
-    console.log(`Snake eaten food at (${coord.x}, ${coord.y})`);
     cells[coord.y].cells[coord.x].isEatenFood = true;
   });
 

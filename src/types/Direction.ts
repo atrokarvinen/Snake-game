@@ -1,1 +1,6 @@
-export declare type Direction = 'up' | 'down' | 'left' | 'right';
+export enum Direction {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
+}
