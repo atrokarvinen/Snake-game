@@ -13,10 +13,8 @@ import { Action } from "../../../types/Action";
 import { Danger } from "../../../types/Danger";
 import { StateActionPair } from "../../../types/StateActionPair";
 import { mapActionToDirection, simplifyState } from "./AlgorithmFunctions";
-import { testDanger, testDirection, testFoodDirection } from "./Testing";
 import { FoodDirection } from "../../../types/FoodDirection";
 import { TrainingProgress } from "../../../types/TrainingProgress";
-import { Point } from "../../../types/Point";
 
 export interface AlgorithmProps {
   boardWidth: number;
@@ -27,7 +25,7 @@ export interface AlgorithmProps {
   updateScore: (increment: number) => void;
   gameOver: (willAutoClose: boolean) => void;
   gameStarted: () => void;
-  reportProgress: (progress: TrainingProgress) => void;
+  reportProgress: (progress: TrainingProgress[]) => void;
 }
 
 export interface AlgorithmState {
@@ -45,7 +43,7 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
   private TrainingIteration: number;
   private CumulativeReward: number;
-  private CumulativeRewards: Point[];
+  private TrainingProgress: TrainingProgress[];
 
   private Actions: (string | Action)[];
   private Dangers: (string | Danger)[];
@@ -72,7 +70,7 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
     this.TrainingIteration = 0;
     this.CumulativeReward = 0;
-    this.CumulativeRewards = [];
+    this.TrainingProgress = [];
 
     this.Alpha = 1.0;
     this.Gamma = 0.8;
@@ -162,15 +160,13 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
     if ((this.state.gameState.IsOver || this.t > maxTurns) && this.gameRunning) {
       this.props.gameOver(true);
-      this.CumulativeRewards.push({
-        x: this.TrainingIteration - 1,
-        y: this.CumulativeReward / (this.TrainingIteration)
-      });
-      this.props.reportProgress({
-        CumulativeRewards: this.CumulativeRewards.map((r) => {return {x: r.x, y: r.y}}),
+      this.TrainingProgress.push({
         Iteration: this.TrainingIteration,
-        RandomChance: this.epsilonThreshold()
+        CumulativeReward: this.CumulativeReward / this.TrainingIteration,
+        RandomChance: this.epsilonThreshold(),
+        Score: this.props.score
       });
+      this.props.reportProgress([...this.TrainingProgress]);
       this.gameRunning = false;
       console.log("Game over. Turns: " + this.t + ". Score: " + this.props.score);
     } else if (this.gameRunning && this.state.gameInitialized) {

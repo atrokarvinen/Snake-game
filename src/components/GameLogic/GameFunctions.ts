@@ -16,17 +16,17 @@ export const initializeGame = (): GameState => {
 export const initializeSnake = (): Snake => {
   const coords: Array<Point> = [
     { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 2, y: 0 },
-    { x: 3, y: 0 },
-    { x: 4, y: 0 }
+    // { x: 1, y: 0 },
+    // { x: 2, y: 0 },
+    // { x: 3, y: 0 },
+    // { x: 4, y: 0 }
   ];
   const directions: Array<Direction> = [
     Direction.RIGHT,
-    Direction.RIGHT,
-    Direction.RIGHT,
-    Direction.RIGHT,
-    Direction.RIGHT
+    // Direction.RIGHT,
+    // Direction.RIGHT,
+    // Direction.RIGHT,
+    // Direction.RIGHT
   ];
   return {
     coordinates: coords,

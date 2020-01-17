@@ -9,10 +9,10 @@ import {
   ResponsiveContainer
 } from "recharts";
 import * as React from "react";
-import { Point } from "../../../types/Point";
+import { TrainingProgress } from "../../../types/TrainingProgress";
 
 interface GraphProps {
-  data: Point[];
+  data: TrainingProgress[];
 }
 
 const Graph: React.FunctionComponent<GraphProps> = props => {
@@ -31,15 +31,24 @@ const Graph: React.FunctionComponent<GraphProps> = props => {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis />
-        <YAxis />
+        <YAxis yAxisId="reward" dataKey="CumulativeReward"/>
+        <YAxis yAxisId="score" orientation="right" dataKey="Score"/>
         <Tooltip />
         <Legend />
         <Line
           isAnimationActive={animate}
+          yAxisId="reward"
           type="monotone"
-          dataKey="y"
+          dataKey="CumulativeReward"
           stroke="blue"
-          // dot={<CustomizedDot LSL={hueLSL} USL={hueUSL} />}
+          name="Learning curve"
+        />
+        <Line
+          isAnimationActive={animate}
+          yAxisId="score"
+          type="monotone"
+          dataKey="Score"
+          stroke="red"
         />
       </LineChart>
     </ResponsiveContainer>

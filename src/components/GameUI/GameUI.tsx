@@ -21,7 +21,7 @@ export interface GameUIState {
   highScore: number;
   gameOver: boolean;
   startGame: boolean;
-  trainingInfo: TrainingProgress;
+  trainingInfo: TrainingProgress[];
 }
 
 export default class GameUI extends React.Component<GameUIProps, GameUIState> {
@@ -38,7 +38,7 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
       highScore: 0,
       gameOver: false,
       startGame: false,
-      trainingInfo: { CumulativeRewards: [], Iteration: 0, RandomChance: 0 }
+      trainingInfo: []
     };
   }
 
@@ -202,7 +202,7 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
           score={this.state.score}
           startGame={this.state.startGame}
           gameStarted={() => this.setState({ startGame: false })}
-          reportProgress={(progress: TrainingProgress) =>
+          reportProgress={(progress: TrainingProgress[]) =>
             this.setState({ trainingInfo: progress })
           }
         />
@@ -247,7 +247,8 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
                 id={0}
                 selectedId={this.state.selectedTab}
                 onClick={() => this.setState({ selectedTab: 0 })}
-                src="home_icon-icons.com_73532.png"
+                src="head_human_face_profile_nose_person-512.png"
+                text="Human player"
               />
               {/* <TabButton
                 id={1}
@@ -259,9 +260,10 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
                 id={2}
                 selectedId={this.state.selectedTab}
                 onClick={() =>
-                  this.setState({ selectedTab: 2, paused: false, startGame: true })
+                  this.setState({ selectedTab: 2, startGame: true })
                 }
                 src="Robot-icon-by-ahlangraphic-580x386.jpg"
+                text="AI player"
               />
             </div>
           </Card>

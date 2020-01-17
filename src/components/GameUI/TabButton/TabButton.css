@@ -1,15 +1,23 @@
+.tab-button {
+  display: flex;
+  flex-direction: column;
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5%;
+}
+
+.tab-button:hover {
+  cursor: pointer;
+}
+
+.tab-button.selected {
+  border: 1px solid green;
+}
+
 .tab-image {
   margin-left: auto;
   margin-right: auto;
   margin-top: 5%;
   padding: 5%;
-}
-
-.tab-image:hover {
-    cursor: pointer;
-}
-
-.tab-image.selected {
-    border: 1px solid green;
-    /* border: 1px solid red; */
 }

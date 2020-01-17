@@ -1,7 +1,6 @@
-import { Point } from "./Point";
-
 export type TrainingProgress = {
-    CumulativeRewards: Point[],
+    CumulativeReward: number,
     Iteration: number,
     RandomChance: number,
+    Score: number,
 }
