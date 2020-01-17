@@ -145,8 +145,8 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
               </button>
             </div>
             <div className="game-scores">
-              <label className="game-scores__label">Score: {this.state.score}</label>
-              <label className="game-scores__label">
+              <label className="text-label">Score: {this.state.score}</label>
+              <label className="text-label">
                 High score: {this.state.highScore}
               </label>
             </div>

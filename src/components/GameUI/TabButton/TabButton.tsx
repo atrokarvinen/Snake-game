@@ -24,7 +24,7 @@ const TabButton: React.FunctionComponent<TabButtonProps> = props => {
         width="50"
         height="50"
       />
-      <label>{props.text}</label>
+      <label className="text-label">{props.text}</label>
     </div>
   );
 };

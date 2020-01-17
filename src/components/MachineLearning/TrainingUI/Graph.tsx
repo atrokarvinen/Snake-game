@@ -24,9 +24,9 @@ const Graph: React.FunctionComponent<GraphProps> = props => {
         data={props.data}
         margin={{
           top: 5,
-          right: 100,
-          left: 0,
-          bottom: 5
+          right: 5,
+          left: 5,
+          bottom: 0
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
