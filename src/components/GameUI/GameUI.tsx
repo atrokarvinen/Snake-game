@@ -66,7 +66,7 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
           gameOver: false
         });
         this.startNewGame(false);
-      }, 1000);
+      }, 100);
     }
   };
 

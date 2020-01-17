@@ -1,0 +1,10 @@
+export enum Danger {
+    NONE,
+    RIGHT,
+    FORWARD,
+    FORWARD_AND_RIGHT,
+    LEFT,
+    LEFT_AND_RIGHT,
+    LEFT_AND_FORWARD,
+    LEFT_AND_FORWARD_AND_RIGHT
+  }

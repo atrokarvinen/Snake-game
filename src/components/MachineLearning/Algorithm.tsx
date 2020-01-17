@@ -2,45 +2,19 @@ import * as React from "react";
 import { Direction } from "../../types/Direction";
 import { isNumber } from "util";
 import GameLogic from "../GameLogic/GameLogic";
-import { Snake } from "../../types/Snake";
 import {
-  moveSnake,
-  movePoint,
-  pointsAreEqual,
   takeGameStep,
   generatePointPool,
   initializeGame
 } from "../GameLogic/GameFunctions";
-import { Point } from "../../types/Point";
 import { GameState } from "../../types/GameState";
-
-enum Action {
-  LEFT,
-  FORWARD,
-  RIGHT
-}
-
-enum Danger {
-  NONE,
-  RIGHT,
-  FORWARD,
-  FORWARD_AND_RIGHT,
-  LEFT,
-  LEFT_AND_RIGHT,
-  LEFT_AND_FORWARD,
-  LEFT_AND_FORWARD_AND_RIGHT
-}
-
-declare type State = {
-  Danger: Danger;
-  SnakeDirection: Direction;
-  FoodDirection: Direction;
-};
-
-declare type StateActionPair = {
-  State: State;
-  Action: Action;
-};
+import { State } from "../../types/State";
+import { Action } from "../../types/Action";
+import { Danger } from "../../types/Danger";
+import { StateActionPair } from "../../types/StateActionPair";
+import { mapActionToDirection, simplifyState } from "./AlgorithmFunctions";
+import { testDanger, testDirection, testFoodDirection } from "./Testing";
+import { FoodDirection } from "../../types/FoodDirection";
 
 export interface AlgorithmProps {
   boardWidth: number;
@@ -55,6 +29,8 @@ export interface AlgorithmProps {
 
 export interface AlgorithmState {
   gameState: GameState;
+  gameInitialized: boolean;
+  currentState: State;
 }
 
 export default class Algorithm extends React.Component<AlgorithmProps, AlgorithmState> {
@@ -65,12 +41,12 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
   private t: number; // Time
 
   private TrainingIteration: number;
-  private TrainingIterationPrev: number;
   private CumulativeReward: number;
 
   private Actions: (string | Action)[];
   private Dangers: (string | Danger)[];
   private Directions: (string | Direction)[];
+  private FoodDirections: (string | FoodDirection)[];
 
   private pointPool: number[];
 
@@ -81,11 +57,16 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
     super(props);
 
     this.state = {
-      gameState: initializeGame()
+      gameState: initializeGame(),
+      currentState: {
+        Danger: Danger.NONE,
+        FoodDirection: FoodDirection.DOWN,
+        SnakeDirection: Direction.DOWN
+      },
+      gameInitialized: false
     };
 
     this.TrainingIteration = 0;
-    this.TrainingIterationPrev = 0;
     this.CumulativeReward = 0;
 
     this.Alpha = 1.0;
@@ -96,6 +77,7 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
     this.Actions = [];
     this.Dangers = [];
     this.Directions = [];
+    this.FoodDirections = [];
     this.pointPool = generatePointPool(this.props.boardWidth, this.props.boardHeight);
     this.iterate = setInterval(this.train, 50);
     this.gameRunning = false;
@@ -107,10 +89,12 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
       return isNumber(value);
     });
     this.Dangers = Object.values(Danger).filter((value: string | Danger) => {
-      console.log(value);
       return isNumber(value);
     });
     this.Directions = Object.values(Direction).filter((value: string | Direction) => {
+      return isNumber(value);
+    });
+    this.FoodDirections = Object.values(FoodDirection).filter((value: string | FoodDirection) => {
       return isNumber(value);
     });
 
@@ -119,65 +103,18 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
       this.Actions.length *
       this.Dangers.length *
       this.Directions.length *
-      this.Directions.length;
+      this.FoodDirections.length;
     for (let i = 0; i < permutations; i++) {
       this.Q.push(0.0);
     }
 
     console.log(
-      `Q size: ${this.Actions.length} x ${this.Dangers.length} x ${this.Directions.length} x ${this.Directions.length} = ${permutations}`
+      `Q size: ${this.Actions.length} x ${this.Dangers.length} x ${this.Directions.length} x ${this.FoodDirections.length} = ${permutations}`
     );
 
-    // [0, 1, 2] = [LEFT, FORWARD, RIGHT]
-    // [UP, DOWN, LEFT, RIGHT]
-    // const actionStr = ["LEFT", "FORWARD", "RIGHT"];
-    // const dirStr = ["UP", "DOWN", "LEFT", "RIGHT"];
-    // for (let i = 0; i < this.Actions.length; i++) {
-    //   const action = this.Actions[i];
-    //   for (let j = 0; j < this.Directions.length; j++) {
-    //     const direction = this.Directions[j];
-    //     const realDir: Direction = this.MapActionToDirection(i, j);
-    //     console.log(
-    //       `Head dir ${dirStr[j]}, action ${actionStr[i]} => ${dirStr[realDir]}`
-    //     );
-    //   }
-    // }
-
-    // for (let foodDir = 0; foodDir < this.Directions.length; foodDir++) {
-    //   for (let snakeDir = 0; snakeDir < this.Directions.length; snakeDir++) {
-    //     for (let danger = 0; danger < this.Dangers.length; danger++) {
-    //       for (let action = 0; action < this.Actions.length; action++) {
-    //         const sa: StateActionPair = {
-    //           Action: action,
-    //           State: { Danger: danger, FoodDirection: foodDir, SnakeDirection: snakeDir }
-    //         };
-    //         const id = this.MapStateActionToId(sa);
-    //         const s: StateActionPair = this.MapIdToState(id);
-
-    //         console.log(
-    //           `(${action}, ${danger}, ${snakeDir}, ${foodDir}) => ${id} => (${s.Action}, ${s.State.Danger}, ${s.State.SnakeDirection}, ${s.State.FoodDirection})`
-    //         );
-    //       }
-    //     }
-    //   }
-    // }
-
-    // const dangersStr: string[] = Object.keys(Danger);
-    // for (let i = 0; i < 2; i++) {
-    //   for (let j = 0; j < 2; j++) {
-    //     for (let k = 0; k < 2; k++) {
-    //       const imminentDangers: number[] = [i, j, k];
-    //       let sum: number = 0;
-    //       imminentDangers.forEach((isDangerous: number, index: number) => {
-    //         sum += isDangerous * Math.pow(2, imminentDangers.length - index - 1);
-    //       })
-
-    //       const danger: Danger = sum;
-
-    //       console.log(`Danger (${i}, ${j}, ${k}) => ${danger} => ${dangersStr[dangersStr.length / 2 + danger]}`);
-    //     }
-    //   }
-    // }
+    // testDanger();
+    // testDirection();
+    // testFoodDirection(this.props.boardWidth, this.props.boardHeight);
   }
 
   componentWillUnmount() {
@@ -194,45 +131,63 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
       console.log(`Starting iteration #${this.TrainingIteration}`);
       this.t = 0;
       this.TrainingIteration++;
+
+      const newGame: GameState = initializeGame();
+      const inputDirection: Direction =
+        newGame.Snake.directions[newGame.Snake.directions.length - 1];
+
+      const currentState: State = simplifyState(
+        newGame,
+        inputDirection,
+        this.Actions,
+        this.props.boardWidth,
+        this.props.boardHeight
+      );
+
       this.setState({
-        gameState: initializeGame()
+        gameState: newGame,
+        currentState: currentState,
+        gameInitialized: true
       });
       this.props.gameStarted();
       this.gameRunning = true;
     }
-    
+
     if (this.state.gameState.IsOver || this.t > maxTurns) {
       this.props.gameOver(true);
       this.gameRunning = false;
       console.log("Game over. Turns: " + this.t + ". Score: " + this.props.score);
-    } else if (this.gameRunning) {
+    } else if (this.gameRunning && this.state.gameInitialized) {
       this.playSingleGame();
     }
   };
 
   playSingleGame = async () => {
-    // let gameState: GameState = initializeGame();
-    // let inputDirection: Direction =
-    //   gameState.Snake.directions[gameState.Snake.directions.length - 1];
-    // gameState = this.takeAction(gameState, inputDirection);
-    // let currentState: State = this.simplifyState(this.state.gameState, inputDirection);
-
-    const { gameState } = this.state;
-
-    let inputDirection: Direction =
-      gameState.Snake.directions[gameState.Snake.directions.length - 1];
-    let currentState: State = this.simplifyState(gameState, Direction.DOWN);
+    const { gameState, currentState } = this.state;
 
     // console.log("Turn: " + this.t);
 
-    const action: Action = this.usePolicy(currentState);
     // const action: Action = Action.RIGHT;
-    inputDirection = this.mapActionToDirection(action, currentState.SnakeDirection);
+    const action: Action = this.usePolicy(currentState);
+    const inputDirection = mapActionToDirection(action, currentState.SnakeDirection);
 
     // console.log(`Turn #${this.t} Action = ${action} => ${inputDirection}`);
 
-    const newGameState: GameState = this.takeAction(gameState, inputDirection);
-    const newState: State = this.simplifyState(newGameState, inputDirection);
+    const newGameState: GameState = takeGameStep(
+      gameState,
+      inputDirection,
+      this.props.boardWidth,
+      this.props.boardHeight,
+      this.pointPool
+    );
+
+    const newState: State = simplifyState(
+      newGameState,
+      inputDirection,
+      this.Actions,
+      this.props.boardWidth,
+      this.props.boardHeight
+    );
     const immediateReward: number = this.getReward(newGameState);
 
     //Console.WriteLine($"Moved from ({_CurrentState.X}, {_CurrentState.Y})[{action}] => ({newState.X}, {newState.Y}): {immediateReward}");
@@ -251,68 +206,12 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
       this.props.updateScore(1);
     }
 
-    currentState = newState;
     this.t++;
 
     this.setState({
-      gameState: newGameState
+      gameState: newGameState,
+      currentState: newState
     });
-  };
-
-  simplifyState = (gameState: GameState, InputDirection: Direction): State => {
-    const { Snake, FoodLocation } = gameState;
-    const { boardWidth, boardHeight } = this.props;
-    const snakeHeadDir: Direction = Snake.directions[Snake.directions.length - 1];
-
-    const headCoordinate: Point = Snake.coordinates[Snake.coordinates.length - 1];
-    let foodDir: Direction;
-    if (FoodLocation.x > headCoordinate.x) {
-      foodDir = Direction.RIGHT;
-    } else if (FoodLocation.x < headCoordinate.x) {
-      foodDir = Direction.LEFT;
-    } else if (FoodLocation.y < headCoordinate.y) {
-      foodDir = Direction.DOWN;
-    } else {
-      foodDir = Direction.UP;
-    }
-
-    const movedSnake: Snake = moveSnake(Snake, InputDirection, boardWidth, boardHeight);
-    const imminentDangers: number[] = new Array<number>(this.Actions.length);
-    for (let actionId = 0; actionId < imminentDangers.length; actionId++) {
-      imminentDangers[actionId] = 0;
-
-      const action: Action | string = this.Actions[actionId];
-      const realAction: Direction = this.mapActionToDirection(action, snakeHeadDir);
-      const peekHeadCoordinate: Point = movePoint(
-        headCoordinate,
-        realAction,
-        boardWidth,
-        boardHeight
-      );
-
-      for (let i = 0; i < movedSnake.coordinates.length - 1; i++) {
-        const element: Point = movedSnake.coordinates[i];
-        if (pointsAreEqual(peekHeadCoordinate, element)) {
-          imminentDangers[actionId] = 1;
-          break;
-        }
-      }
-    }
-
-    let sum: number = 0;
-    imminentDangers.forEach((isDangerous: number, index: number) => {
-      sum += isDangerous * Math.pow(2, imminentDangers.length - index - 1);
-    });
-
-    const danger: Danger = sum;
-
-    const state: State = {
-      Danger: danger,
-      SnakeDirection: snakeHeadDir,
-      FoodDirection: foodDir
-    };
-
-    return state;
   };
 
   UpdateQ = (stateFrom: State, stateTo: State, a: Action, r: number) => {
@@ -356,7 +255,7 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
   MapIdToState = (id: number): StateActionPair => {
     const l0: number = this.Actions.length * this.Dangers.length * this.Directions.length;
     const l1: number = this.Actions.length * this.Dangers.length;
-    const foodDir: Direction = Math.floor(id / l0);
+    const foodDir: FoodDirection = Math.floor(id / l0);
     const snakeDir: Direction = Math.floor((id - foodDir * l0) / l1);
     const danger: Danger = Math.floor(
       (id - foodDir * l0 - snakeDir * l1) / this.Actions.length
@@ -383,8 +282,9 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
   usePolicy = (state: State): Action => {
     // const explore: boolean = Math.random() < this.Epsilon;
-    const epsilonFade: number = Math.pow(0.80, this.TrainingIteration);
-    const explore: boolean = this.Epsilon + (1 - this.Epsilon) * epsilonFade > Math.random();
+    const epsilonFade: number = Math.pow(0.8, this.TrainingIteration);
+    const explore: boolean =
+      this.Epsilon + (1 - this.Epsilon) * epsilonFade > Math.random();
     if (explore) {
       const value: number = Math.round(Math.random() * this.Actions.length - 0.5);
       return value;
@@ -395,53 +295,6 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
     }
   };
 
-  takeAction = (stateFrom: GameState, inputDirection: Direction): GameState => {
-    return takeGameStep(
-      stateFrom,
-      inputDirection,
-      this.props.boardWidth,
-      this.props.boardHeight,
-      this.pointPool
-    );
-  };
-
-  mapActionToDirection(action: string | Action, currentDir: Direction): Direction {
-    if (action !== Action.FORWARD)
-      switch (currentDir) {
-        case Direction.UP:
-          if (action === Action.LEFT) {
-            return Direction.LEFT;
-          } else if (action === Action.RIGHT) {
-            return Direction.RIGHT;
-          }
-          break;
-        case Direction.RIGHT:
-          if (action === Action.LEFT) {
-            return Direction.UP;
-          } else if (action === Action.RIGHT) {
-            return Direction.DOWN;
-          }
-          break;
-        case Direction.DOWN:
-          if (action === Action.LEFT) {
-            return Direction.RIGHT;
-          } else if (action === Action.RIGHT) {
-            return Direction.LEFT;
-          }
-          break;
-        case Direction.LEFT:
-          if (action === Action.LEFT) {
-            return Direction.DOWN;
-          } else if (action === Action.RIGHT) {
-            return Direction.UP;
-          }
-          break;
-        default:
-          return Direction.RIGHT;
-      }
-    return currentDir;
-  }
-
   getReward = (gameState: GameState): number => {
     if (gameState.AddScore) {
       return 1;
@@ -451,21 +304,13 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
     return -0.01;
   };
 
-  algorithmUpdateScore = () => {
-    this.props.updateScore(1);
-  };
-
-  algorithmGameOver = () => {
-    this.props.gameOver(true);
-  };
-
   public render() {
     return (
       <GameLogic
         boardHeight={this.props.boardHeight}
         boardWidth={this.props.boardWidth}
-        updateScore={this.algorithmUpdateScore}
-        gameOver={this.algorithmGameOver}
+        updateScore={this.props.updateScore}
+        gameOver={() => this.props.gameOver(true)}
         paused={false}
         start={false}
         humanControlled={false}
