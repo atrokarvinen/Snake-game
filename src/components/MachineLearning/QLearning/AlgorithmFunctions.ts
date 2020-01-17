@@ -1,12 +1,12 @@
-import { Direction } from "../../types/Direction";
-import { Action } from "../../types/Action";
-import { GameState } from "../../types/GameState";
-import { State } from "../../types/State";
-import { Point } from "../../types/Point";
-import { moveSnake, movePoint, pointsAreEqual } from "../GameLogic/GameFunctions";
-import { Danger } from "../../types/Danger";
-import { Snake } from "../../types/Snake";
-import { FoodDirection } from "../../types/FoodDirection";
+import { Direction } from "../../../types/Direction";
+import { Action } from "../../../types/Action";
+import { GameState } from "../../../types/GameState";
+import { State } from "../../../types/State";
+import { Point } from "../../../types/Point";
+import { moveSnake, movePoint, pointsAreEqual } from "../../GameLogic/GameFunctions";
+import { Danger } from "../../../types/Danger";
+import { Snake } from "../../../types/Snake";
+import { FoodDirection } from "../../../types/FoodDirection";
 
 export const mapActionToDirection = (
   action: string | Action,

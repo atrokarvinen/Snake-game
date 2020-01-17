@@ -1,20 +1,22 @@
 import * as React from "react";
-import { Direction } from "../../types/Direction";
+import { Direction } from "../../../types/Direction";
 import { isNumber } from "util";
-import GameLogic from "../GameLogic/GameLogic";
+import GameLogic from "../../GameLogic/GameLogic";
 import {
   takeGameStep,
   generatePointPool,
   initializeGame
-} from "../GameLogic/GameFunctions";
-import { GameState } from "../../types/GameState";
-import { State } from "../../types/State";
-import { Action } from "../../types/Action";
-import { Danger } from "../../types/Danger";
-import { StateActionPair } from "../../types/StateActionPair";
+} from "../../GameLogic/GameFunctions";
+import { GameState } from "../../../types/GameState";
+import { State } from "../../../types/State";
+import { Action } from "../../../types/Action";
+import { Danger } from "../../../types/Danger";
+import { StateActionPair } from "../../../types/StateActionPair";
 import { mapActionToDirection, simplifyState } from "./AlgorithmFunctions";
 import { testDanger, testDirection, testFoodDirection } from "./Testing";
-import { FoodDirection } from "../../types/FoodDirection";
+import { FoodDirection } from "../../../types/FoodDirection";
+import { TrainingProgress } from "../../../types/TrainingProgress";
+import { Point } from "../../../types/Point";
 
 export interface AlgorithmProps {
   boardWidth: number;
@@ -25,6 +27,7 @@ export interface AlgorithmProps {
   updateScore: (increment: number) => void;
   gameOver: (willAutoClose: boolean) => void;
   gameStarted: () => void;
+  reportProgress: (progress: TrainingProgress) => void;
 }
 
 export interface AlgorithmState {
@@ -42,6 +45,7 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
   private TrainingIteration: number;
   private CumulativeReward: number;
+  private CumulativeRewards: Point[];
 
   private Actions: (string | Action)[];
   private Dangers: (string | Danger)[];
@@ -68,10 +72,11 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
     this.TrainingIteration = 0;
     this.CumulativeReward = 0;
+    this.CumulativeRewards = [];
 
     this.Alpha = 1.0;
     this.Gamma = 0.8;
-    this.Epsilon = 0.02;
+    this.Epsilon = 0.0;
     this.t = 0;
     this.Q = [];
     this.Actions = [];
@@ -94,9 +99,11 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
     this.Directions = Object.values(Direction).filter((value: string | Direction) => {
       return isNumber(value);
     });
-    this.FoodDirections = Object.values(FoodDirection).filter((value: string | FoodDirection) => {
-      return isNumber(value);
-    });
+    this.FoodDirections = Object.values(FoodDirection).filter(
+      (value: string | FoodDirection) => {
+        return isNumber(value);
+      }
+    );
 
     // Initialize Q
     const permutations: number =
@@ -153,8 +160,17 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
       this.gameRunning = true;
     }
 
-    if (this.state.gameState.IsOver || this.t > maxTurns) {
+    if ((this.state.gameState.IsOver || this.t > maxTurns) && this.gameRunning) {
       this.props.gameOver(true);
+      this.CumulativeRewards.push({
+        x: this.TrainingIteration - 1,
+        y: this.CumulativeReward / (this.TrainingIteration)
+      });
+      this.props.reportProgress({
+        CumulativeRewards: this.CumulativeRewards.map((r) => {return {x: r.x, y: r.y}}),
+        Iteration: this.TrainingIteration,
+        RandomChance: this.epsilonThreshold()
+      });
       this.gameRunning = false;
       console.log("Game over. Turns: " + this.t + ". Score: " + this.props.score);
     } else if (this.gameRunning && this.state.gameInitialized) {
@@ -282,9 +298,7 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
 
   usePolicy = (state: State): Action => {
     // const explore: boolean = Math.random() < this.Epsilon;
-    const epsilonFade: number = Math.pow(0.8, this.TrainingIteration);
-    const explore: boolean =
-      this.Epsilon + (1 - this.Epsilon) * epsilonFade > Math.random();
+    const explore: boolean = this.epsilonThreshold() > Math.random();
     if (explore) {
       const value: number = Math.round(Math.random() * this.Actions.length - 0.5);
       return value;
@@ -294,6 +308,11 @@ export default class Algorithm extends React.Component<AlgorithmProps, Algorithm
       return value;
     }
   };
+
+  epsilonThreshold(): number {
+    const epsilonFade: number = Math.pow(0.8, this.TrainingIteration);
+    return this.Epsilon + (1 - this.Epsilon) * epsilonFade;
+  }
 
   getReward = (gameState: GameState): number => {
     if (gameState.AddScore) {

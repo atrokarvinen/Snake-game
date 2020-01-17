@@ -1,11 +1,11 @@
-import { Danger } from "../../types/Danger";
-import { Direction } from "../../types/Direction";
-import { Action } from "../../types/Action";
-import { StateActionPair } from "../../types/StateActionPair";
+import { Danger } from "../../../types/Danger";
+import { Direction } from "../../../types/Direction";
+import { Action } from "../../../types/Action";
+import { StateActionPair } from "../../../types/StateActionPair";
 import { mapActionToDirection, getFoodDirection } from "./AlgorithmFunctions";
 import { isNumber } from "util";
-import { FoodDirection } from "../../types/FoodDirection";
-import { Point } from "../../types/Point";
+import { FoodDirection } from "../../../types/FoodDirection";
+import { Point } from "../../../types/Point";
 
 export const testDirection = () => {
   const actionStrs: string[] = getEnumStrings(Action);

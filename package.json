@@ -1,5 +1,5 @@
 {
-  "name": "Snake-game",
+  "name": "snake-game",
   "version": "0.1.0",
   "private": true,
   "homepage": "https://atrokarvinen.github.io/Snake-game",
@@ -11,9 +11,11 @@
     "@types/node": "^12.12.24",
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
+    "@types/recharts": "^1.8.5",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-scripts": "3.3.0",
+    "recharts": "^2.0.0-beta.1",
     "typescript": "^3.7.4"
   },
   "scripts": {

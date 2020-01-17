@@ -4,8 +4,10 @@ import GameLogic from "../GameLogic/GameLogic";
 import ParameterInput from "./ParameterInput";
 import Card from "../Card/Card";
 import GameOverModal from "./GameOverModal/GameOverModal";
-import Algorithm from "../MachineLearning/Algorithm";
 import TabButton from "./TabButton/TabButton";
+import TrainingUI from "../MachineLearning/TrainingUI/TrainingUI";
+import Algorithm from "../MachineLearning/QLearning/Algorithm";
+import { TrainingProgress } from "../../types/TrainingProgress";
 
 export interface GameUIProps {}
 
@@ -19,6 +21,7 @@ export interface GameUIState {
   highScore: number;
   gameOver: boolean;
   startGame: boolean;
+  trainingInfo: TrainingProgress;
 }
 
 export default class GameUI extends React.Component<GameUIProps, GameUIState> {
@@ -34,7 +37,8 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
       score: 0,
       highScore: 0,
       gameOver: false,
-      startGame: false
+      startGame: false,
+      trainingInfo: { CumulativeRewards: [], Iteration: 0, RandomChance: 0 }
     };
   }
 
@@ -161,6 +165,13 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
             {this.renderGameLogic()}
           </Card>
         </div>
+        <div className="game-ai-info">
+          {this.state.selectedTab === 2 ? (
+            <Card className="game-ai-info__card">
+              <TrainingUI trainingInfo={this.state.trainingInfo} />
+            </Card>
+          ) : null}
+        </div>
       </div>
     );
   };
@@ -191,6 +202,9 @@ export default class GameUI extends React.Component<GameUIProps, GameUIState> {
           score={this.state.score}
           startGame={this.state.startGame}
           gameStarted={() => this.setState({ startGame: false })}
+          reportProgress={(progress: TrainingProgress) =>
+            this.setState({ trainingInfo: progress })
+          }
         />
       );
     } else {
